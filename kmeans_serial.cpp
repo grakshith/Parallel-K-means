@@ -54,7 +54,7 @@ int dis(vector<int> a,vector<int> b)
 
 void kmeans()
 {
-    bool flag=true,flag1;
+    bool flag=true;
     int count=0;
 
     while(flag)
@@ -124,20 +124,19 @@ void kmeans()
             new_val.push_back(red/cluster[i].size());
 
             cout<<new_val[0]<<" "<<new_val[1]<<" "<<new_val[2]<<endl;
-            flag1=true;
+    
             for(int k=0;k<3;k++)
             {
                 if(new_val[k]!=colors[i][k])
                 {
                     colors[i][k]=new_val[k];
-                    flag1=flag1 && true;
+                    flag=flag && false;
                 }
                 else
-                  flag1=flag1 && false;
+                  flag=flag && true;
             }
         }
-
-        flag=flag && flag1;
+        flag=!flag;
         
 
     }
@@ -213,7 +212,7 @@ int main( int argc, char** argv )
         }
     
     }
-    imwrite("Final_Image.jpg",image);
+    imwrite("Final_Image_1.jpg",image);
     namedWindow( "Final image", CV_WINDOW_AUTOSIZE );
 
     imshow( "Final image", image );
