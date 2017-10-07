@@ -22,7 +22,7 @@ using namespace std;
 
 
 //Number of Colors
-#define COL 4
+#define COL 16
 
 
 Mat image;
@@ -68,16 +68,33 @@ std::string remove_extension(const std::string& filename) {
 
 void initCentroids()
 {
-  vector<int> rgb;
+//   vector<int> rgb;
   for(int i=0;i<COL;i++)
   {
 
-    rgb.clear();
-    rgb.push_back(rand()%255);
-    rgb.push_back(rand()%255);
-    rgb.push_back(rand()%255);
+    // rgb.clear();
+    // rgb.push_back(rand()%255);
+    // rgb.push_back(rand()%255);
+    // rgb.push_back(rand()%255);
 
-    colors.push_back(rgb); 
+    // colors.push_back(rgb);
+    
+    
+    /**************/
+
+    int rand_index = rand()%img.size();
+    
+    colors.push_back(img[rand_index]);
+
+    // vector<vector<int> > duplicate (img.begin(),img.end()) ;
+
+    // for(int i=0;i<duplicate.size();i++)
+    // {
+    //     for(int j=0;j<colors[i].size();j++)
+    //       cout<<colors[i][j]<<" ";
+    //     cout<<endl;
+    // }
+
   }
 
   for(int i=0;i<colors.size();i++)
@@ -100,7 +117,7 @@ void kmeans()
     bool flag=true;
     int count=0;
 
-    while(flag)
+    while(flag&&count<100)
     {
         count++;
         cout<<"---------------------"<<endl;
@@ -162,9 +179,21 @@ void kmeans()
             }
 
             vector<int> new_val;
-            new_val.push_back(blue/cluster[i].size());
-            new_val.push_back(green/cluster[i].size());
-            new_val.push_back(red/cluster[i].size());
+            if(cluster[i].size())
+            {
+                new_val.push_back(blue/cluster[i].size());
+                new_val.push_back(green/cluster[i].size());
+                new_val.push_back(red/cluster[i].size());
+            }
+            else
+            {
+                cout<<"clutser size 0, hence random initialisation"<<endl;
+                // new_val.push_back(rand()%255);
+                // new_val.push_back(rand()%255);
+                // new_val.push_back(rand()%255);
+                int rand_index = rand()%img.size();
+                new_val = img[rand_index];
+            }
 
             cout<<new_val[0]<<" "<<new_val[1]<<" "<<new_val[2]<<endl;
     
