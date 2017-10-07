@@ -14,3 +14,4 @@ To run kmeans_serial.cpp :
 ```bash
 ./a.out test.jpg
 ```
+Or just use serial.sh  :p
