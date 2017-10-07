@@ -21,7 +21,7 @@ using namespace std;
 
 
 //Number of Colors
-#define COL 4
+#define COL 16
 
 
 
@@ -42,7 +42,7 @@ map<int,vector<int> > cluster; //compressed image
 map<int,vector<int> > read_map(string filepath)
 {
     map<int,vector<int> > a;
-    std::ifstream ifs(filepath);
+    std::ifstream ifs(filepath.c_str());
     boost::archive::text_iarchive ia(ifs);
     ia & a;
     return a;
@@ -51,7 +51,7 @@ map<int,vector<int> > read_map(string filepath)
 vector < vector <int> > read_vector(string filepath)
 {
     vector < vector <int> > a;
-    std::ifstream ifs(filepath);
+    std::ifstream ifs(filepath.c_str());
     boost::archive::text_iarchive ia(ifs);
     ia & a;
     return a;
@@ -77,7 +77,7 @@ int main( int argc, char** argv )
     // string dictpath = argv[2];
     // cout<<filepath<<endl;
 
-    std::ifstream ifs(imagepath);
+    std::ifstream ifs(imagepath.c_str());
     boost::archive::text_iarchive ia(ifs);
     ia>>cluster>>colors>>rows>>cols;
 

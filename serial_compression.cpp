@@ -43,7 +43,7 @@ map<int,vector<int> > cluster; //compressed image
 void write_compressed(map<int,vector<int> > a,vector < vector <int> > b,int row,int col, string filepath)
 
 {
-    std::ofstream ofs(filepath);
+    std::ofstream ofs(filepath.c_str());
     boost::archive::text_oarchive oa(ofs);
     // oa & a;
     // oa & b;
@@ -54,7 +54,7 @@ void write_compressed(map<int,vector<int> > a,vector < vector <int> > b,int row,
 void write_vector(vector < vector <int> > a, string filepath)
 
 {
-    std::ofstream ofs(filepath);
+    std::ofstream ofs(filepath.c_str());
     boost::archive::text_oarchive oa(ofs);
     oa & a;
 }
@@ -187,7 +187,7 @@ void kmeans()
             }
             else
             {
-                cout<<"clutser size 0, hence random initialisation"<<endl;
+                cout<<"Cluster size 0, hence random initialization"<<endl;
                 // new_val.push_back(rand()%255);
                 // new_val.push_back(rand()%255);
                 // new_val.push_back(rand()%255);
