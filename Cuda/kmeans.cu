@@ -190,7 +190,7 @@ __global__ void sumCluster(int *dev_Red,int *dev_Green,int *dev_Blue,int *dev_su
  *  Calculates the new R,G,B values of the centroids dividing the sum of color (for each channel) by the number of pixels in that cluster
  *	New values are stored in global memory since the current R,G,B values of the centroids are in read-only constant memory.
  */
-__global__ void updateCentroids(int *dev_tempRedCentroid, int *dev_tempGreenCentroid, int *dev_tempBlueCentroid,int* dev_sumRed, int *dev_sumGreen,int *dev_sumBlue, int* dev_pixelClusterCounter) {
+__global__ void updateCentroids(int *dev_tempRedCentroid, int *dev_tempGreenCentroid, int *dev_tempBlueCentroid,int* dev_sumRed, int *dev_sumGreen,int *dev_sumBlue, int* dev_pixelClusterCounter,int *dev_flag) {
 
 	// 1 block , 16*16 threads
 	int threadID = threadIdx.x + threadIdx.y * blockDim.x;
@@ -200,11 +200,15 @@ __global__ void updateCentroids(int *dev_tempRedCentroid, int *dev_tempGreenCent
 		int sumRed = dev_sumRed[threadID];
 		int sumGreen = dev_sumGreen[threadID];
 		int sumBlue = dev_sumBlue[threadID];
-
+		
 		//new RGB Centroids' values written in global memory
 		dev_tempRedCentroid[threadID] = (int)(sumRed/currentPixelCounter);
+		
 		dev_tempGreenCentroid[threadID] = (int)(sumGreen/currentPixelCounter);
 		dev_tempBlueCentroid[threadID] = (int)(sumBlue/currentPixelCounter);
+		
+		if(dev_tempGreenCentroid[threadID]!=dev_GreenCentroid[threadID] || dev_tempRedCentroid[threadID]!=dev_RedCentroid[threadID] || dev_tempBlueCentroid[threadID]!=dev_BlueCentroid[threadID])
+		*dev_flag=1;
 	}
 
 }// end updateCentroids
@@ -228,8 +232,9 @@ int main(int argc, char *argv[]) {
 		//int IMAGE_BYTES, CLUSTER_BYTES;
 		int *pixelClusterCounter, *dev_pixelClusterCounter;
 		int *sumRed, *sumGreen, *sumBlue;
+		int flag = 0;
 		int *dev_sumRed, *dev_sumGreen, *dev_sumBlue;
-	
+		int *dev_flag;
 
 		inputFile = argv[1];
 		outputFile = argv[2];
@@ -302,6 +307,7 @@ int main(int argc, char *argv[]) {
 		CUDA_CALL(cudaMalloc((void**) &dev_sumGreen, CLUSTER_BYTES));
 		CUDA_CALL(cudaMalloc((void**) &dev_sumBlue, CLUSTER_BYTES));
 		CUDA_CALL(cudaMalloc((void**) &dev_pixelClusterCounter, CLUSTER_BYTES));
+		CUDA_CALL(cudaMalloc((void**) &dev_flag, sizeof(int)));
 
 		// copy host CPU memory to GPU
 		CUDA_CALL(cudaMemcpy(dev_Red, r, IMAGE_BYTES, cudaMemcpyHostToDevice));
@@ -311,6 +317,7 @@ int main(int argc, char *argv[]) {
 		CUDA_CALL(cudaMemcpy(dev_tempGreenCentroid, greenCentroid,CLUSTER_BYTES,cudaMemcpyHostToDevice ));
 		CUDA_CALL(cudaMemcpy(dev_tempBlueCentroid, blueCentroid,CLUSTER_BYTES,cudaMemcpyHostToDevice ));
 		CUDA_CALL(cudaMemcpy(dev_labelArray, labelArray, IMAGE_BYTES, cudaMemcpyHostToDevice));
+		CUDA_CALL(cudaMemcpy(dev_flag,&flag,sizeof(int),cudaMemcpyHostToDevice));
         //CUDA_CALL(cudaMemcpy(dev_sumRed, sumRed, CLUSTER_BYTES, cudaMemcpyHostToDevice));
 		//CUDA_CALL(cudaMemcpy(dev_sumGreen, sumGreen, CLUSTER_BYTES, cudaMemcpyHostToDevice));
 		//CUDA_CALL(cudaMemcpy(dev_sumBlue, sumBlue, CLUSTER_BYTES, cudaMemcpyHostToDevice));
@@ -346,9 +353,13 @@ int main(int argc, char *argv[]) {
 		cudaEventRecord(start, 0);
 		printf("Launching K-Means Kernels..	\n");
 		//Iteration of kmeans algorithm
+		int num_iterations;
 		for(int i = 0; i < nIterations; i++) {
 
-
+			num_iterations = i;
+			flag=0;
+			CUDA_CALL(cudaMemcpy(dev_flag,&flag,sizeof(int),cudaMemcpyHostToDevice));
+			
 			
 			clearArrays<<<1, dimBLOCK>>>(dev_sumRed, dev_sumGreen, dev_sumBlue, dev_pixelClusterCounter, dev_tempRedCentroid, dev_tempGreenCentroid, dev_tempBlueCentroid);
 
@@ -362,17 +373,23 @@ int main(int argc, char *argv[]) {
 			sumCluster<<<dimGRID, dimBLOCK>>> (dev_Red, dev_Green, dev_Blue, dev_sumRed, dev_sumGreen, dev_sumBlue, dev_labelArray,dev_pixelClusterCounter);
 
 			
-			updateCentroids<<<1,dimBLOCK >>>(dev_tempRedCentroid, dev_tempGreenCentroid, dev_tempBlueCentroid, dev_sumRed, dev_sumGreen, dev_sumBlue, dev_pixelClusterCounter);
+			updateCentroids<<<1,dimBLOCK >>>(dev_tempRedCentroid, dev_tempGreenCentroid, dev_tempBlueCentroid, dev_sumRed, dev_sumGreen, dev_sumBlue, dev_pixelClusterCounter,dev_flag);
 
 		
 			CUDA_CALL(cudaMemcpy(redCentroid, dev_tempRedCentroid, CLUSTER_BYTES,cudaMemcpyDeviceToHost));
 			CUDA_CALL(cudaMemcpy(greenCentroid, dev_tempGreenCentroid, CLUSTER_BYTES,cudaMemcpyDeviceToHost));
 			CUDA_CALL(cudaMemcpy(blueCentroid, dev_tempBlueCentroid, CLUSTER_BYTES,cudaMemcpyDeviceToHost));
+			CUDA_CALL(cudaMemcpy(&flag, dev_flag,sizeof(int),cudaMemcpyDeviceToHost));
+			
 
 			CUDA_CALL(cudaMemcpyToSymbol(dev_RedCentroid, redCentroid, CLUSTER_BYTES));
 			CUDA_CALL(cudaMemcpyToSymbol(dev_GreenCentroid, greenCentroid, CLUSTER_BYTES));
 			CUDA_CALL(cudaMemcpyToSymbol(dev_BlueCentroid, blueCentroid, CLUSTER_BYTES));
+
+			if(flag==0)
+				break;
 			
+
 		}
 		cudaEventRecord(stop, 0);
 		float elapsed;
@@ -387,6 +404,7 @@ int main(int argc, char *argv[]) {
 
 		
 		printf("Kmeans code ran in: %f secs.\n", elapsed/1000.0);
+		printf("Converged in %d iterations.\n",num_iterations);
 		printf("\n");
 
 	
