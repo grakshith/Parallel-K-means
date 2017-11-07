@@ -1,18 +1,4 @@
 '''
-Andrea Toscano 
-Universita' degli Studi di Milano
-MS Computer Science
-Jpg - Raw Converter (uint8 stream)
-
-With OSX Terminal:
-	Install Pip (Python package manager):
-		sudo easy_install pip
-
-	Install PIL, Numpy:
-		pip install PIL
-		pip install numpy
-
-Using Terminal move where .py and images are stored.
 
 USE CASES
 to get .raw file from .jpg file

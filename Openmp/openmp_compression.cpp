@@ -188,8 +188,9 @@ void kmeans()
         for(int i=0;i<COL;i++)
         {
             //cout<<img[cluster[0][1]][0]<<" ";
-            int blue=0,green=0,red=0;
-            for(int j=0;j<cluster[i].size();j++)
+            int blue=0,green=0,red=0,j=0;
+            #pragma omp parallel for reduction(+:red,green,blue) private(j)
+            for(j=0;j<cluster[i].size();j++)
             {
                 //cout<<img[cluster[i][j]][0]<<endl;
                 blue+=img[cluster[i][j]][0];
